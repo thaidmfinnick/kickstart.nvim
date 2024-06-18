@@ -99,10 +99,12 @@ vim.g.have_nerd_font = false
 --  For more options, you can see `:help option-list`
 
 -- Make line numbers default
-vim.opt.number = true
+-- vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.nu = true
+vim.opt.relativenumber = true
+vim.o.statuscolumn = '%s %l %r '
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -144,6 +146,7 @@ vim.opt.splitbelow = true
 --  and `:help 'listchars'`
 vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.icon = true
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -890,6 +893,44 @@ require('lazy').setup({
     -- order to load the plugin when the command is run for the first time
     keys = {
       { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
+    },
+  },
+  {
+    'sindrets/diffview.nvim',
+    lazy = false,
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'lewis6991/gitsigns.nvim',
+    },
+    config = true,
+    keys = {
+      { ',d', '<cmd>DiffviewOpen<cr>', mode = { 'n' }, desc = 'Repo Diffview', nowait = true },
+      { ',hh', '<cmd>DiffviewFileHistory<cr>', mode = { 'n' }, desc = 'Repo history' },
+      { ',hf', '<cmd>DiffviewFileHistory --follow %<cr>', mode = { 'n' }, desc = 'File history' },
+      { ',hm', '<cmd>DiffviewOpen master<cr>', mode = { 'n' }, desc = 'Diff with master' },
+      {
+        ',hl',
+        function()
+          local current_line = vim.fn.line '.'
+          local file = vim.fn.expand '%'
+          -- DiffviewFileHistory --follow -L{current_line},{current_line}:{file}
+          local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
+          vim.cmd(cmd)
+        end,
+        desc = 'Line history',
+      },
+      {
+        ',hl',
+        function()
+          local v = require('util').get_visual_selection_info()
+          local file = vim.fn.expand '%'
+          -- DiffviewFileHistory --follow -L{range_start},{range_end}:{file}
+          local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', v.start_row + 1, v.end_row + 1, file)
+          vim.cmd(cmd)
+        end,
+        mode = { 'v' },
+        desc = 'Range history',
+      },
     },
   },
 
