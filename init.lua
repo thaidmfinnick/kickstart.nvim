@@ -169,7 +169,8 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>ql', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all diagnostics [Q]uickfix list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -185,6 +186,8 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
 -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
+-- File explorer
+vim.keymap.set('n', '-', '<CMD>Oil --float<CR>', { desc = 'Open parent directory' })
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
@@ -373,9 +376,11 @@ require('lazy').setup({
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'flutter')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+      local extensions = require('telescope').extensions
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
@@ -386,6 +391,8 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>fl', extensions.flutter.commands, { desc = '[F]lutter commands' })
+      vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -569,7 +576,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -581,7 +588,10 @@ require('lazy').setup({
         -- But for many setups, the LSP (`tsserver`) will work just fine
         -- tsserver = {},
         --
-
+        jsonls = {},
+        docker_compose_language_service = {},
+        marksman = {},
+        elixirls = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -634,7 +644,7 @@ require('lazy').setup({
     lazy = false,
     keys = {
       {
-        '<leader>f',
+        '<leader>fm',
         function()
           require('conform').format { async = true, lsp_fallback = true }
         end,
@@ -873,12 +883,28 @@ require('lazy').setup({
     lazy = false,
     dependencies = {
       'nvim-lua/plenary.nvim',
+      'stevearc/dressing.nvim',
     },
     config = true,
     opts = {
       dev_log = {
         enabled = true,
         open_cmd = 'tabedit',
+      },
+      fvm = true,
+      decorations = {
+        statusline = {
+          -- set to true to be able use the 'flutter_tools_decorations.app_version' in your statusline
+          -- this will show the current version of the flutter app from the pubspec.yaml file
+          app_version = true,
+          -- set to true to be able use the 'flutter_tools_decorations.device' in your statusline
+          -- this will show the currently running device if an application was started with a specific
+          -- device
+          device = true,
+          -- set to true to be able use the 'flutter_tools_decorations.project_config' in your statusline
+          -- this will show the currently selected project configuration
+          project_config = true,
+        },
       },
       lsp = {
         color = { -- show the derived colours for dart variables
@@ -955,6 +981,29 @@ require('lazy').setup({
         desc = 'Range history',
       },
     },
+  },
+  {
+    'stevearc/oil.nvim',
+    opts = {
+      view_options = {
+        -- Show files and directories that start with "."
+        show_hidden = true,
+        -- This function defines what is considered a "hidden" file
+        is_hidden_file = function(name, _)
+          return vim.startswith(name, '.')
+        end,
+        -- so you may want to set to false if you work with large directories.
+        natural_order = false,
+        sort = {
+          -- sort order can be "asc" or "desc"
+          -- see :help oil-columns to see which columns are sortable
+          { 'type', 'asc' },
+          { 'name', 'asc' },
+        },
+      },
+    },
+    -- Optional dependencies
+    -- dependencies = { "nvim-tree/nvim-web-devicons" },
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
