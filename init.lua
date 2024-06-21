@@ -146,7 +146,6 @@ vim.opt.splitbelow = true
 --  and `:help 'listchars'`
 vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
-vim.opt.icon = true
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -332,7 +331,7 @@ require('lazy').setup({
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      { 'nvim-tree/nvim-web-devicons', enabled = true },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -1008,7 +1007,7 @@ require('lazy').setup({
       },
     },
     -- Optional dependencies
-    -- dependencies = { "nvim-tree/nvim-web-devicons" },
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
   },
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
