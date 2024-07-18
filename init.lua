@@ -662,6 +662,7 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         clangd = {},
+
         gopls = {
           filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
         },
@@ -679,6 +680,7 @@ require('lazy').setup({
         docker_compose_language_service = {},
         marksman = {},
         elixirls = {},
+        bashls = {},
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -745,7 +747,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, dart = true, elixir = true }
+        local disable_filetypes = { c = true, cpp = true, dart = true, elixir = true, yaml = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
