@@ -365,12 +365,16 @@ require('lazy').setup({
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
-        --
         defaults = {
           layout_strategy = 'vertical',
-          layout_config = { height = 0.95 },
+          layout_config = {
+            height = 0.95,
+            prompt_position = 'bottom',
+            vertical = {
+              preview_cutoff = 0,
+            },
+          },
         },
-        -- pickers = {}
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
