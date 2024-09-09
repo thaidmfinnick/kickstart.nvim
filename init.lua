@@ -370,18 +370,30 @@ require('lazy').setup({
 
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
+      local layout_conf = {
+        layout_strategy = 'vertical',
+        layout_config = {
+          height = 0.95,
+          prompt_position = 'bottom',
+          vertical = {
+            preview_cutoff = 0,
+          },
+        },
+      }
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
-        defaults = {
-          layout_strategy = 'vertical',
-          layout_config = {
-            height = 0.95,
-            prompt_position = 'bottom',
-            vertical = {
-              preview_cutoff = 0,
-            },
-          },
+        defaults = {},
+        pickers = {
+          selp_tags = layout_conf,
+          find_files = layout_conf,
+          grep_string = layout_conf,
+          live_grep = layout_conf,
+          diagnostics = layout_conf,
+          buffers = layout_conf,
+          resume = layout_conf,
+          oldfiles = layout_conf,
+          current_buffer_fuzzy_find = layout_conf,
         },
         extensions = {
           ['ui-select'] = {
@@ -468,7 +480,7 @@ require('lazy').setup({
               height = 0.4,
               width = 0.5,
               prompt_position = 'top',
-              preview_cutoff = 120,
+              preview_cutoff = 0,
             },
             attach_mappings = function(prompt_bufnr, map)
               map('i', '<C-d>', function()
