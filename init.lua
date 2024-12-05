@@ -203,6 +203,9 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+vim.keymap.set('n', 'gmo', '<cmd>CopilotChat<CR>', { desc = 'Open Copilot Chat' })
+vim.keymap.set('n', 'gmq', '<cmd>CopilotChatQuit<CR>', { desc = 'Quit Copilot Chat' })
+vim.keymap.set('n', 'gmr', '<cmd>CopilotChatRestart<CR>', { desc = 'Restart Copilot Chat' })
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -1146,6 +1149,27 @@ require('lazy').setup({
     build = function()
       vim.fn['mkdp#util#install']()
     end,
+  },
+  {
+    'marko-cerovac/material.nvim',
+  },
+  {
+    'CopilotC-Nvim/CopilotChat.nvim',
+    branch = 'canary',
+    dependencies = {
+      { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
+      { 'nvim-lua/plenary.nvim' }, -- for curl, log wrapper
+    },
+    build = 'make tiktoken', -- Only on MacOS or Linux
+    opts = {
+      mappings = {
+        complete = {
+          detail = 'Use @<Tab> or /<Tab> for options.',
+          insert = '<S-Tab>',
+        },
+      }, -- See Configuration section for options
+    },
+    -- See Commands section for default commands if you want to lazy load on them
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
