@@ -903,7 +903,7 @@ require('lazy').setup({
     'EdenEast/nightfox.nvim',
     priority = 1000,
     init = function()
-      vim.cmd.colorscheme 'nightfox'
+      -- vim.cmd.colorscheme 'nightfox'
     end,
   },
   -- {
@@ -1140,20 +1140,20 @@ require('lazy').setup({
     -- Optional dependencies
     dependencies = { 'nvim-tree/nvim-web-devicons' },
   },
-  {
-    'ray-x/go.nvim',
-    dependencies = { -- optional packages
-      'ray-x/guihua.lua',
-      'neovim/nvim-lspconfig',
-      'nvim-treesitter/nvim-treesitter',
-    },
-    config = function()
-      require('go').setup()
-    end,
-    event = { 'CmdlineEnter' },
-    ft = { 'go', 'gomod' },
-    build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
-  },
+  -- {
+  --   'ray-x/go.nvim',
+  --   dependencies = { -- optional packages
+  --     'ray-x/guihua.lua',
+  --     'neovim/nvim-lspconfig',
+  --     'nvim-treesitter/nvim-treesitter',
+  --   },
+  --   config = function()
+  --     require('go').setup()
+  --   end,
+  --   event = { 'CmdlineEnter' },
+  --   ft = { 'go', 'gomod' },
+  --   build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
+  -- },
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
@@ -1169,7 +1169,7 @@ require('lazy').setup({
   },
   {
     'CopilotC-Nvim/CopilotChat.nvim',
-    branch = 'canary',
+    branch = 'main',
     dependencies = {
       { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
       { 'nvim-lua/plenary.nvim' }, -- for curl, log wrapper
@@ -1190,6 +1190,16 @@ require('lazy').setup({
     version = '*', -- Use for stability; omit to use `main` branch for the latest features
     event = 'VeryLazy',
     config = true,
+  },
+  {
+    'oxfist/night-owl.nvim',
+    lazy = false, -- make sure we load this during startup if it is your main colorscheme
+    priority = 1000, -- make sure to load this before all the other start plugins
+    opts = {},
+    config = function()
+      require('night-owl').setup()
+      vim.cmd.colorscheme 'night-owl'
+    end,
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
