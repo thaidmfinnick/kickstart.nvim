@@ -4,7 +4,7 @@
 ==================== READ THIS BEFORE CONTINUING ====================
 =====================================================================
 ========                                    .-----.          ========
-========         .----------------------.   | === |          ========
+======         .----------------------.   | === |          ========
 ========         |.-""""""""""""""""""-.|   |-----|          ========
 ========         ||                    ||   | === |          ========
 ========         ||   KICKSTART.NVIM   ||   |-----|          ========
@@ -737,6 +737,15 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
+        automatic_enable = false,
+        -- automatic_enable = {
+        --   'lua_ls',
+        --   'dart',
+        --   'md',
+        --   'dockerfile',
+        --   'js',
+        -- },
+        automatic_installation = true,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -1199,6 +1208,22 @@ require('lazy').setup({
     config = function()
       require('night-owl').setup()
       vim.cmd.colorscheme 'night-owl'
+    end,
+  },
+  {
+    'gbprod/substitute.nvim',
+    opts = {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    },
+    config = function()
+      require('substitute').setup()
+      -- substitution keymap
+      vim.keymap.set('n', 's', require('substitute').operator, { noremap = true })
+      vim.keymap.set('n', 'ss', require('substitute').line, { noremap = true })
+      vim.keymap.set('n', 'S', require('substitute').eol, { noremap = true })
+      vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
     end,
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
