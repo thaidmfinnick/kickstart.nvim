@@ -102,8 +102,11 @@ vim.g.have_nerd_font = true
 --  Experiment for yourself to see if you like it!
 vim.opt.nu = true
 vim.opt.relativenumber = true
-vim.o.statuscolumn = '%s %l %r '
-
+-- vim.o.statuscolumn = '%s %l %r '
+-- vim.o.statuscolumn = '%s%#LineNr#%{&nu?v:lnum:""}' .. '%=%#@type#%{&rnu?"".v:relnum:""}   '
+vim.o.statuscolumn = '%s%#LineNr#%{&nu?v:lnum:""}%#LineNr# %{&rnu?"".v:relnum:""}'
+-- vim.o.statuscolumn = [[%s%#LineNr#%{v:lnum==line('.')?'▶ ':'  '}%{&nu?v:lnum:""}]]
+--
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
 
@@ -170,6 +173,7 @@ vim.opt.hlsearch = true
 vim.diagnostic.config { virtual_text = true }
 
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
@@ -390,7 +394,7 @@ require('lazy').setup({
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
-        defaults = layout_conf,
+        defaults = {},
         pickers = {
           selp_tags = layout_conf,
           find_files = layout_conf,
@@ -398,6 +402,14 @@ require('lazy').setup({
           live_grep = layout_conf,
           diagnostics = layout_conf,
           buffers = {
+            layout_strategy = 'vertical',
+            layout_config = {
+              height = 0.95,
+              prompt_position = 'bottom',
+              vertical = {
+                preview_cutoff = 0,
+              },
+            },
             mappings = {
               i = {
                 ['<c-d>'] = 'delete_buffer',
@@ -699,6 +711,7 @@ require('lazy').setup({
         gopls = {
           filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
         },
+        ts_query_ls = {},
         -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -714,6 +727,7 @@ require('lazy').setup({
         marksman = {},
         elixirls = {},
         bashls = {},
+
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -1024,7 +1038,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'elixir', 'eex', 'go' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc', 'elixir', 'eex', 'go', 'query' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
