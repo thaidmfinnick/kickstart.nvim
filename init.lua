@@ -189,6 +189,10 @@ vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all d
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+vim.keymap.set('n', '<leader>tv', function()
+  vim.cmd 'vertical 40split | terminal'
+  vim.cmd 'startinsert'
+end, { desc = 'Open vertical terminal' })
 
 -- NOTE: TIP: Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -649,6 +653,25 @@ require('lazy').setup({
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
+          vim.lsp.config('ts_query_ls', {
+            settings = {
+              parser_install_directories = {
+                vim.fs.joinpath(vim.fn.stdpath 'data', '/lazy/nvim-treesitter/parser/'),
+              },
+              -- This setting is provided by default
+              parser_aliases = {
+                ecma = 'javascript',
+                jsx = 'javascript',
+                php_only = 'php',
+                query = 'scm',
+              },
+              language_retrieval_patterns = {
+                'languages/src/([^/]+)/[^/]+\\.scm$',
+                '*/query_editor.scm$',
+              },
+            },
+          })
+
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
@@ -711,7 +734,9 @@ require('lazy').setup({
         gopls = {
           filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
         },
-        ts_query_ls = {},
+        ts_query_ls = {
+          filetypes = { 'query', 'scm' },
+        },
         -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -823,7 +848,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, dart = true, elixir = true, yaml = true, html = true }
+        local disable_filetypes = { c = true, cpp = true, elixir = true, yaml = true, html = true, query = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -831,6 +856,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        dart = { 'dart', 'format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1104,6 +1130,7 @@ require('lazy').setup({
           virtual_text_str = '■', -- the virtual text character to highlight
         },
         settings = {
+          -- lineLength = 120, -- max line length that the LSP will report when formatting
           showTodos = true,
           completeFunctionCalls = true,
           renameFilesWithClasses = 'prompt', -- "always"
