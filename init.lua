@@ -178,7 +178,11 @@ vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' 
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
-vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
+-- vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
+vim.keymap.set('n', '<leader>e', function()
+  require('timber.buffers').open_float { silent = true }
+  vim.diagnostic.open_float()
+end)
 vim.keymap.set('n', '<leader>ql', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all diagnostics [Q]uickfix list' })
 
@@ -193,6 +197,10 @@ vim.keymap.set('n', '<leader>tv', function()
   vim.cmd 'vertical 40split | terminal'
   vim.cmd 'startinsert'
 end, { desc = 'Open vertical terminal' })
+
+vim.keymap.set('n', '<leader>tl', function()
+  require('timber.summary').open()
+end, { desc = 'Open timber summary log' })
 
 -- NOTE: TIP: Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -848,21 +856,31 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, elixir = true, yaml = true, html = true, query = true }
+        local disable_filetypes = { c = true, cpp = true, yaml = true, html = true, query = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
         }
       end,
+      formatters = {
+        dart_format = {
+          command = 'dart',
+          args = { 'format', '$FILENAME' },
+          condition = function()
+            return vim.fn.executable 'dart' == 1
+          end,
+        },
+      },
       formatters_by_ft = {
         lua = { 'stylua' },
         dart = { 'dart', 'format' },
+        elixir = { 'mix', 'format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
+        javascript = { 'prettierd', 'prettier' },
       },
     },
   },
@@ -1274,7 +1292,102 @@ require('lazy').setup({
     'Goose97/timber.nvim',
     version = '*', -- Use for stability; omit to use `main` branch for the latest features
     event = 'VeryLazy',
-    config = true,
+    config = function()
+      require('timber').setup {
+        log_templates = {
+          default = {
+            javascript = js_like_single_log,
+            typescript = js_like_single_log,
+            jsx = js_like_single_log,
+            tsx = js_like_single_log,
+            lua = {
+              [[_utils.log("%watcher_marker_start" .. _utils.dump(%log_target) .. "%watcher_marker_end")]],
+              auto_import = [[local _utils = require("custom.utils")]],
+            },
+            elixir = {
+              [[Logger.info(~s|%watcher_marker_start#{inspect(%log_target, pretty: true)}%watcher_marker_end\n|)]],
+              auto_import = [[require Logger]],
+            },
+          },
+          plain = {
+            javascript = js_like_plain_log,
+            typescript = js_like_plain_log,
+            jsx = js_like_plain_log,
+            tsx = js_like_plain_log,
+            lua = [[utils.log("%log_marker %insert_cursor")]],
+            elixir = {
+              [[Logger.info(~s|%watcher_marker_start %insert_cursor %watcher_marker_end\n|)]],
+              auto_import = [[require Logger]],
+            },
+          },
+        },
+        batch_log_templates = {
+          default = {
+            javascript = js_like_batch_log,
+            typescript = js_like_batch_log,
+            jsx = js_like_batch_log,
+            tsx = js_like_batch_log,
+            lua = {
+              [[_utils.log(string.format("%watcher_marker_start%repeat<\n  %log_target=%s><, >%watcher_marker_end", %repeat<_utils.dump(%log_target)><, >))]],
+              auto_import = [[local _utils = require("custom.utils")]],
+            },
+            elixir = {
+              [[Logger.info(~s|%watcher_marker_start#{inspect(%{%repeat<%log_target: %log_target><, >}, pretty: true)}%watcher_marker_end\n|)]],
+              auto_import = [[require Logger]],
+            },
+          },
+        },
+        log_watcher = {
+          enabled = true,
+          sources = {
+            nvim_debug = {
+              name = 'timber.nvim debug',
+              type = 'filesystem',
+              path = '/tmp/nvim_debug.log',
+              buffer = {
+                syntax = 'timber-lua',
+              },
+            },
+            neotest_elixir = {
+              name = 'Neotest elixir adapter',
+              type = 'filesystem',
+              path = '/tmp/neotest_elixir.log',
+            },
+            neotest = {
+              name = 'Neotest',
+              type = 'neotest',
+              buffer = {
+                syntax = 'timber-lua',
+              },
+            },
+            pomelo_debug = {
+              name = 'pomelo debug',
+              type = 'filesystem',
+              path = '/Users/goose/Documents/workspace/personal/pomelo/log/pomelo.log',
+              buffer = {
+                syntax = 'erlang',
+              },
+            },
+            orange_debug = {
+              name = 'orange debug',
+              type = 'filesystem',
+              path = './log/orange.log',
+              buffer = {
+                syntax = 'erlang',
+              },
+            },
+            pancake_work_debug = {
+              name = 'pancake-work-api debug',
+              type = 'filesystem',
+              path = '/tmp/pancake_work_debug.log',
+              buffer = {
+                syntax = 'erlang',
+              },
+            },
+          },
+        },
+      }
+    end,
   },
   {
     'oxfist/night-owl.nvim',
