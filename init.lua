@@ -219,11 +219,11 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
-vim.keymap.set('n', 'gmo', '<cmd>CopilotChat<CR>', { desc = 'Open Copilot Chat' })
-vim.keymap.set('n', 'gmq', '<cmd>CopilotChatQuit<CR>', { desc = 'Quit Copilot Chat' })
-vim.keymap.set('n', 'gmr', '<cmd>CopilotChatRestart<CR>', { desc = 'Restart Copilot Chat' })
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
+--
+--  Aider
+vim.keymap.set('n', '<leader>ao', ':AiderOpen<CR>', { noremap = true, silent = true, desc = 'Open Aider' })
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
@@ -234,6 +234,34 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
     vim.highlight.on_yank()
   end,
+})
+
+vim.lsp.config('lua_ls', {
+  settings = {
+    Lua = {
+      diagnostics = {
+        globals = { 'vim' },
+      },
+    },
+  },
+})
+vim.lsp.config('ts_query_ls', {
+  settings = {
+    parser_install_directories = {
+      vim.fs.joinpath(vim.fn.stdpath 'data', '/lazy/nvim-treesitter/parser/'),
+    },
+    -- This setting is provided by default
+    parser_aliases = {
+      ecma = 'javascript',
+      jsx = 'javascript',
+      php_only = 'php',
+      query = 'scm',
+    },
+    language_retrieval_patterns = {
+      'languages/src/([^/]+)/[^/]+\\.scm$',
+      '*/query_editor.scm$',
+    },
+  },
 })
 
 -- [[ Install `lazy.nvim` plugin manager ]]
@@ -467,6 +495,7 @@ require('lazy').setup({
         }
       end, { desc = '[ ] Find existing buffers' })
       vim.keymap.set('n', '<leader>fl', extensions.flutter.commands, { desc = '[F]lutter commands' })
+      vim.keymap.set('n', '<leader>fr', '<Cmd>FlutterRun --flavor dev --dart-define=FLAVOR=dev<CR>', { desc = '[F]lutter Run [D]ev Flavor' })
       vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
 
       -- Slightly advanced example of overriding default behavior and theme
@@ -616,6 +645,15 @@ require('lazy').setup({
           --
           -- In this case, we create a function that lets us more easily define mappings specific
           -- for LSP related items. It sets the mode, buffer and description for us each time.
+
+          local bufnr = event.buf
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          local filename = vim.api.nvim_buf_get_name(bufnr)
+          local file_extension = filename:match '%.([^.]+)$'
+          if client and file_extension == 'dart' then
+            require('flutter-tools.lsp').attach()
+          end
+
           local map = function(keys, func, desc)
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
@@ -661,31 +699,11 @@ require('lazy').setup({
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
-          vim.lsp.config('ts_query_ls', {
-            settings = {
-              parser_install_directories = {
-                vim.fs.joinpath(vim.fn.stdpath 'data', '/lazy/nvim-treesitter/parser/'),
-              },
-              -- This setting is provided by default
-              parser_aliases = {
-                ecma = 'javascript',
-                jsx = 'javascript',
-                php_only = 'php',
-                query = 'scm',
-              },
-              language_retrieval_patterns = {
-                'languages/src/([^/]+)/[^/]+\\.scm$',
-                '*/query_editor.scm$',
-              },
-            },
-          })
-
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
           if client and client.server_capabilities.documentHighlightProvider then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
@@ -720,6 +738,12 @@ require('lazy').setup({
           end
         end,
       })
+
+      require('lspconfig').lexical.setup {
+        cmd = { 'lexical' },
+        root_markers = { 'mix.exs', '.git' },
+        filetypes = { 'elixir', 'eelixir', 'heex' },
+      }
 
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
@@ -758,7 +782,6 @@ require('lazy').setup({
         jsonls = {},
         docker_compose_language_service = {},
         marksman = {},
-        elixirls = {},
         bashls = {},
 
         lua_ls = {
@@ -771,17 +794,14 @@ require('lazy').setup({
                 version = 'LuaJIT',
               },
               diagnostics = {
-                -- Get the language server to recognize the `vim` global
                 globals = {
                   'vim',
                   'require',
                 },
               },
               workspace = {
-                -- Make the server aware of Neovim runtime files
                 library = vim.api.nvim_get_runtime_file('', true),
               },
-              -- Do not send telemetry data containing a randomized but unique identifier
               telemetry = {
                 enable = false,
               },
@@ -1011,14 +1031,52 @@ require('lazy').setup({
   --     -- vim.cmd.colorscheme 'material'
   --   end,
   -- },
-  -- {
-  --   'catppuccin/nvim',
-  --   name = 'catppuccin',
-  --   priority = 1000,
-  --   init = function()
-  --     vim.cmd.colorscheme 'catppuccin-mocha'
-  --   end,
-  -- },
+  {
+    'catppuccin/nvim',
+    name = 'catppuccin',
+    priority = 1000,
+    init = function()
+      vim.cmd.colorscheme 'catppuccin-mocha'
+    end,
+    config = function()
+      -- You can configure the colorscheme here.
+      --  For example, you can change the background to be dark or light.
+      --  See `:help catppuccin` for more information.
+      require('catppuccin').setup {
+        flavour = 'mocha', -- latte, frappe, macchiato, mocha
+        color_overrides = {
+          mocha = {
+            rosewater = '#efc9c2',
+            flamingo = '#ebb2b2',
+            pink = '#f2a7de',
+            mauve = '#b889f4',
+            red = '#ea7183',
+            maroon = '#ea838c',
+            peach = '#f39967',
+            yellow = '#eaca89',
+            green = '#96d382',
+            teal = '#78cec1',
+            sky = '#91d7e3',
+            sapphire = '#68bae0',
+            blue = '#739df2',
+            lavender = '#a0a8f6',
+            text = '#b5c1f1',
+            subtext1 = '#a6b0d8',
+            subtext0 = '#959ec2',
+            overlay2 = '#848cad',
+            overlay1 = '#717997',
+            overlay0 = '#63677f',
+            surface2 = '#505469',
+            surface1 = '#3e4255',
+            surface0 = '#2c2f40',
+            base = '#1a1c2a',
+            mantle = '#141620',
+            crust = '#0e0f16',
+          },
+        },
+      }
+    end,
+  },
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -1117,13 +1175,12 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'stevearc/dressing.nvim',
     },
-    config = true,
     opts = {
       dev_log = {
         enabled = true,
-        open_cmd = '40vnew',
+        open_cmd = '50vnew',
       },
-      fvm = true,
+      flutter_lookup_cmd = 'mise where flutter',
       decorations = {
         statusline = {
           -- set to true to be able use the 'flutter_tools_decorations.app_version' in your statusline
@@ -1279,14 +1336,40 @@ require('lazy').setup({
     },
     build = 'make tiktoken', -- Only on MacOS or Linux
     opts = {
+      model = 'claude-sonnet-4',
       mappings = {
         complete = {
           detail = 'Use @<Tab> or /<Tab> for options.',
           insert = '<S-Tab>',
         },
       }, -- See Configuration section for options
+
+      contexts = {
+        file = {
+          input = function(callback)
+            local telescope = require 'telescope.builtin'
+            local actions = require 'telescope.actions'
+            local action_state = require 'telescope.actions.state'
+            telescope.find_files {
+              previewer = false,
+              attach_mappings = function(prompt_bufnr)
+                actions.select_default:replace(function()
+                  actions.close(prompt_bufnr)
+                  local selection = action_state.get_selected_entry()
+                  callback(selection[1])
+                end)
+                return true
+              end,
+            }
+          end,
+        },
+      },
     },
-    -- See Commands section for default commands if you want to lazy load on them
+    config = function(_, opts)
+      require('CopilotChat').setup(opts)
+      -- You can set up keymaps here, or in your own keymaps.lua file
+      vim.keymap.set('n', 'gmo', '<cmd>CopilotChat<cr>', { desc = 'Copilot Chat' })
+    end,
   },
   {
     'Goose97/timber.nvim',
@@ -1300,10 +1383,6 @@ require('lazy').setup({
             typescript = js_like_single_log,
             jsx = js_like_single_log,
             tsx = js_like_single_log,
-            lua = {
-              [[_utils.log("%watcher_marker_start" .. _utils.dump(%log_target) .. "%watcher_marker_end")]],
-              auto_import = [[local _utils = require("custom.utils")]],
-            },
             elixir = {
               [[Logger.info(~s|%watcher_marker_start#{inspect(%log_target, pretty: true)}%watcher_marker_end\n|)]],
               auto_import = [[require Logger]],
@@ -1327,10 +1406,6 @@ require('lazy').setup({
             typescript = js_like_batch_log,
             jsx = js_like_batch_log,
             tsx = js_like_batch_log,
-            lua = {
-              [[_utils.log(string.format("%watcher_marker_start%repeat<\n  %log_target=%s><, >%watcher_marker_end", %repeat<_utils.dump(%log_target)><, >))]],
-              auto_import = [[local _utils = require("custom.utils")]],
-            },
             elixir = {
               [[Logger.info(~s|%watcher_marker_start#{inspect(%{%repeat<%log_target: %log_target><, >}, pretty: true)}%watcher_marker_end\n|)]],
               auto_import = [[require Logger]],
@@ -1390,13 +1465,47 @@ require('lazy').setup({
     end,
   },
   {
+    'RRethy/nvim-treesitter-textsubjects',
+    branch = 'master',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+  },
+  {
     'oxfist/night-owl.nvim',
     lazy = false, -- make sure we load this during startup if it is your main colorscheme
     priority = 1000, -- make sure to load this before all the other start plugins
     opts = {},
     config = function()
-      require('night-owl').setup()
-      vim.cmd.colorscheme 'night-owl'
+      -- require('night-owl').setup()
+      -- vim.cmd.colorscheme 'night-owl'
+    end,
+  },
+  {
+    'nvim-neotest/neotest',
+    dependencies = {
+      'nvim-neotest/nvim-nio',
+      'nvim-lua/plenary.nvim',
+      'antoinemadec/FixCursorHold.nvim',
+      'nvim-treesitter/nvim-treesitter',
+      'jfpedroza/neotest-elixir',
+    },
+    config = function()
+      require('neotest').setup {
+        adapters = {
+          -- Add your test adapters here
+          -- For example, to add the Neotest Elixir adapter:
+          require 'neotest-elixir' {
+            post_process_command = function(cmd)
+              return vim.iter({ { 'env', 'MIX_ENV=test' }, cmd }):flatten():totable()
+            end,
+          },
+          -- require 'neotest-rust',
+          -- require 'neotest-python',
+          -- require 'neotest-javascript',
+          -- require 'neotest-go',
+          -- require 'neotest-vim-test',
+          -- require 'neotest-dotnet',
+        },
+      }
     end,
   },
   {
@@ -1414,6 +1523,16 @@ require('lazy').setup({
       vim.keymap.set('n', 'S', require('substitute').eol, { noremap = true })
       vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
     end,
+  },
+  {
+    'joshuavial/aider.nvim',
+    opts = {
+      -- your configuration comes here
+      -- if you don't want to use the default settings
+      auto_manage_context = true, -- automatically manage buffer context
+      default_bindings = true, -- use default <leader>A keybindings
+      debug = false, -- enable debug logging
+    },
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
