@@ -182,7 +182,7 @@ vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagn
 vim.keymap.set('n', '<leader>e', function()
   require('timber.buffers').open_float { silent = true }
   vim.diagnostic.open_float()
-end)
+end, { desc = 'Show timber buffer log' })
 vim.keymap.set('n', '<leader>ql', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all diagnostics [Q]uickfix list' })
 
@@ -193,10 +193,6 @@ vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all d
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-vim.keymap.set('n', '<leader>tv', function()
-  vim.cmd 'vertical 40split | terminal'
-  vim.cmd 'startinsert'
-end, { desc = 'Open vertical terminal' })
 
 vim.keymap.set('n', '<leader>tl', function()
   require('timber.summary').open()
@@ -222,8 +218,6 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 --
---  Aider
-vim.keymap.set('n', '<leader>ao', ':AiderOpen<CR>', { noremap = true, silent = true, desc = 'Open Aider' })
 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
@@ -347,7 +341,7 @@ require('lazy').setup({
     config = function() -- This is the function that runs, AFTER loading
       require('which-key').setup()
 
-      require('which-key').register {
+      require('which-key').add {
         { '<leader>c', group = '[C]ode' },
         { '<leader>c_', hidden = true },
         { '<leader>d', group = '[D]ocument' },
@@ -364,7 +358,7 @@ require('lazy').setup({
         { '<leader>w_', hidden = true },
       }
       -- visual mode
-      require('which-key').register { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
+      require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
     end,
   },
 
@@ -477,7 +471,11 @@ require('lazy').setup({
       local extensions = require('telescope').extensions
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<leader>sf', function()
+        builtin.find_files {
+          hidden = true,
+        }
+      end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
@@ -495,6 +493,12 @@ require('lazy').setup({
         }
       end, { desc = '[ ] Find existing buffers' })
       vim.keymap.set('n', '<leader>fl', extensions.flutter.commands, { desc = '[F]lutter commands' })
+      vim.keymap.set(
+        'n',
+        '<leader>fd',
+        '<Cmd>FlutterRun -d macos --flavor dev --dart-define=FLAVOR=dev<CR>',
+        { desc = '[F]lutter Run [D]ev Flavor for Desktop' }
+      )
       vim.keymap.set('n', '<leader>fr', '<Cmd>FlutterRun --flavor dev --dart-define=FLAVOR=dev<CR>', { desc = '[F]lutter Run [D]ev Flavor' })
       vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
 
@@ -1039,11 +1043,35 @@ require('lazy').setup({
       vim.cmd.colorscheme 'catppuccin-mocha'
     end,
     config = function()
-      -- You can configure the colorscheme here.
-      --  For example, you can change the background to be dark or light.
-      --  See `:help catppuccin` for more information.
       require('catppuccin').setup {
-        flavour = 'mocha', -- latte, frappe, macchiato, mocha
+        flavour = 'mocha',
+        highlight_overrides = {
+          all = function(colors)
+            return {
+              CurSearch = { bg = colors.sky },
+              IncSearch = { bg = colors.sky },
+              CursorLineNr = { fg = colors.blue, style = { 'bold' } },
+              DashboardFooter = { fg = colors.overlay0 },
+              TreesitterContextBottom = { style = {} },
+              WinSeparator = { fg = colors.overlay0, style = { 'bold' } },
+              ['@markup.italic'] = { fg = colors.blue, style = { 'italic' } },
+              ['@markup.strong'] = { fg = colors.blue, style = { 'bold' } },
+              Headline = { style = { 'bold' } },
+              Headline1 = { fg = colors.blue, style = { 'bold' } },
+              Headline2 = { fg = colors.pink, style = { 'bold' } },
+              Headline3 = { fg = colors.lavender, style = { 'bold' } },
+              Headline4 = { fg = colors.green, style = { 'bold' } },
+              Headline5 = { fg = colors.peach, style = { 'bold' } },
+              Headline6 = { fg = colors.flamingo, style = { 'bold' } },
+              rainbow1 = { fg = colors.blue, style = { 'bold' } },
+              rainbow2 = { fg = colors.pink, style = { 'bold' } },
+              rainbow3 = { fg = colors.lavender, style = { 'bold' } },
+              rainbow4 = { fg = colors.green, style = { 'bold' } },
+              rainbow5 = { fg = colors.peach, style = { 'bold' } },
+              rainbow6 = { fg = colors.flamingo, style = { 'bold' } },
+            }
+          end,
+        },
         color_overrides = {
           mocha = {
             rosewater = '#efc9c2',
@@ -1120,18 +1148,19 @@ require('lazy').setup({
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we set the section for
-      -- cursor location to LINE:COLUMN
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
-
+      -- local statusline = require 'mini.statusline'
+      -- -- set use_icons to true if you have a Nerd Font
+      -- statusline.setup { use_icons = vim.g.have_nerd_font }
+      --
+      -- -- You can configure sections in the statusline by overriding their
+      -- -- default behavior. For example, here we set the section for
+      -- -- cursor location to LINE:COLUMN
+      -- ---@diagnostic disable-next-line: duplicate-set-field
+      -- -- local flutter = vim.g.flutter_tools_decorations and vim.g.flutter_tools_decorations.app_version or ''
+      -- statusline.section_location = function()
+      --   return '%2l:%-2v'
+      -- end
+      --
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
@@ -1221,23 +1250,32 @@ require('lazy').setup({
     config = function() end,
   },
   {
-    'kdheepak/lazygit.nvim',
-    cmd = {
-      'LazyGit',
-      'LazyGitConfig',
-      'LazyGitCurrentFile',
-      'LazyGitFilter',
-      'LazyGitFilterCurrentFile',
-    },
-    -- optional for floating window border decoration
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-    },
-    -- setting the keybinding for LazyGit with 'keys' is recommended in
-    -- order to load the plugin when the command is run for the first time
-    keys = {
-      { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
-    },
+    'nvim-lualine/lualine.nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    opts = {},
+    config = function(_, _)
+      local function filepath()
+        return vim.fn.expand '%:p' -- full file path
+      end
+      require('lualine').setup {
+        sections = {
+          lualine_a = { 'mode' },
+          lualine_b = { 'branch', 'diff', 'diagnostics' },
+          lualine_c = { filepath },
+          lualine_x = { 'filesize', 'filetype' },
+          lualine_y = { 'g:flutter_tools_decorations.app_version', 'progress' },
+          lualine_z = { 'location' },
+        },
+        inactive_sections = {
+          lualine_a = { 'mode' },
+          lualine_b = { 'branch', 'diff', 'diagnostics' },
+          lualine_c = { 'filename' },
+          lualine_x = { 'encoding', 'filesize', 'filetype' },
+          lualine_y = { 'progress' },
+          lualine_z = { 'location' },
+        },
+      }
+    end,
   },
   {
     'sindrets/diffview.nvim',
@@ -1376,6 +1414,11 @@ require('lazy').setup({
     version = '*', -- Use for stability; omit to use `main` branch for the latest features
     event = 'VeryLazy',
     config = function()
+      vim.api.nvim_create_user_command('TimberClearLogs', function()
+        require('timber.buffers').clear_captured_logs()
+        require('timber.summary').clear()
+      end, {})
+      vim.cmd [[cab tc TimberClearLogs]]
       require('timber').setup {
         log_templates = {
           default = {
@@ -1415,40 +1458,11 @@ require('lazy').setup({
         log_watcher = {
           enabled = true,
           sources = {
-            nvim_debug = {
-              name = 'timber.nvim debug',
-              type = 'filesystem',
-              path = '/tmp/nvim_debug.log',
-              buffer = {
-                syntax = 'timber-lua',
-              },
-            },
-            neotest_elixir = {
-              name = 'Neotest elixir adapter',
-              type = 'filesystem',
-              path = '/tmp/neotest_elixir.log',
-            },
             neotest = {
               name = 'Neotest',
               type = 'neotest',
               buffer = {
                 syntax = 'timber-lua',
-              },
-            },
-            pomelo_debug = {
-              name = 'pomelo debug',
-              type = 'filesystem',
-              path = '/Users/goose/Documents/workspace/personal/pomelo/log/pomelo.log',
-              buffer = {
-                syntax = 'erlang',
-              },
-            },
-            orange_debug = {
-              name = 'orange debug',
-              type = 'filesystem',
-              path = './log/orange.log',
-              buffer = {
-                syntax = 'erlang',
               },
             },
             pancake_work_debug = {
@@ -1505,6 +1519,9 @@ require('lazy').setup({
           -- require 'neotest-vim-test',
           -- require 'neotest-dotnet',
         },
+        consumer = {
+          timber = require('timber.watcher.sources.neotest').consumer,
+        },
       }
     end,
   },
@@ -1533,6 +1550,59 @@ require('lazy').setup({
       default_bindings = true, -- use default <leader>A keybindings
       debug = false, -- enable debug logging
     },
+  },
+
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    opt = {},
+    config = function(_, _)
+      function set_size(term)
+        if term.direction == 'horizontal' then
+          return 15
+        elseif term.direction == 'vertical' then
+          return vim.o.columns * 0.4
+        end
+      end
+
+      function _lazygit_toggle() end
+
+      require('toggleterm').setup {
+        size = set_size,
+        open_mapping = [[<leader>te]],
+        shade_terminals = true,
+        shading_factor = 2,
+        start_in_insert = true,
+        insert_mappings = true,
+        terminal_mappings = true,
+        persist_size = true,
+        direction = 'horizontal',
+        close_on_exit = true,
+        shell = vim.o.shell,
+      }
+
+      local Terminal = require('toggleterm.terminal').Terminal
+
+      local term_vertical = Terminal:new { direction = 'vertical' }
+      local term_horizontal = Terminal:new { direction = 'horizontal' }
+
+      local map = vim.keymap.set
+
+      local lazygit = Terminal:new { cmd = 'lazygit', hidden = true, direction = 'float' }
+
+      map('n', '<leader>lg', function()
+        lazygit:toggle()
+      end, { desc = 'Toggle LazyGit', noremap = true, silent = true })
+      map('n', 'tj', function()
+        term_horizontal:toggle()
+      end, { desc = 'Toggle terminal below', noremap = true, silent = true })
+      map('n', 'tl', function()
+        term_vertical:toggle()
+      end, { desc = 'Toggle terminal vertical', noremap = true, silent = true })
+      -- map('n', 'tq', function()
+      --   -- Terminal:clos
+      -- end, { desc = 'Close all terminals', noremap = true, silent = true })
+    end,
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
