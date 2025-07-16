@@ -500,6 +500,12 @@ require('lazy').setup({
         { desc = '[F]lutter Run [D]ev Flavor for Desktop' }
       )
       vim.keymap.set('n', '<leader>fr', '<Cmd>FlutterRun --flavor dev --dart-define=FLAVOR=dev<CR>', { desc = '[F]lutter Run [D]ev Flavor' })
+      vim.keymap.set(
+        'n',
+        '<leader>fw',
+        '<Cmd>FlutterRun -d chrome --web-experimental-hot-reload --web-browser-flag "--disable-web-security" --web-port 5000<CR>',
+        { desc = '[F]lutter Run [W]eb' }
+      )
       vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
 
       -- Slightly advanced example of overriding default behavior and theme
@@ -565,7 +571,7 @@ require('lazy').setup({
         harpoon:list():add()
       end, { desc = 'Add item to Harpoon' })
 
-      vim.keymap.set('n', '<C-h>', function()
+      vim.keymap.set('n', '<leader>ha', function()
         toggle_telescope(harpoon:list())
       end, { desc = 'Open harpoon window' })
 
@@ -1541,16 +1547,6 @@ require('lazy').setup({
       vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
     end,
   },
-  {
-    'joshuavial/aider.nvim',
-    opts = {
-      -- your configuration comes here
-      -- if you don't want to use the default settings
-      auto_manage_context = true, -- automatically manage buffer context
-      default_bindings = true, -- use default <leader>A keybindings
-      debug = false, -- enable debug logging
-    },
-  },
 
   {
     'akinsho/toggleterm.nvim',
@@ -1569,7 +1565,7 @@ require('lazy').setup({
 
       require('toggleterm').setup {
         size = set_size,
-        open_mapping = [[<leader>te]],
+        open_mapping = [[tj]],
         shade_terminals = true,
         shading_factor = 2,
         start_in_insert = true,
@@ -1590,15 +1586,15 @@ require('lazy').setup({
 
       local lazygit = Terminal:new { cmd = 'lazygit', hidden = true, direction = 'float' }
 
-      map('n', '<leader>lg', function()
+      map('n', 'lg', function()
         lazygit:toggle()
       end, { desc = 'Toggle LazyGit', noremap = true, silent = true })
-      map('n', 'tj', function()
-        term_horizontal:toggle()
-      end, { desc = 'Toggle terminal below', noremap = true, silent = true })
-      map('n', 'tl', function()
-        term_vertical:toggle()
-      end, { desc = 'Toggle terminal vertical', noremap = true, silent = true })
+      -- map('n', 'tj', function()
+      --   term_horizontal:toggle()
+      -- end, { desc = 'Toggle terminal below', noremap = true, silent = true })
+      -- map('n', 'tl', function()
+      --   term_vertical:toggle()
+      -- end, { desc = 'Toggle terminal vertical', noremap = true, silent = true })
       -- map('n', 'tq', function()
       --   -- Terminal:clos
       -- end, { desc = 'Close all terminals', noremap = true, silent = true })
