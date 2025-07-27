@@ -175,14 +175,14 @@ vim.diagnostic.config { virtual_text = true }
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' })
 
+vim.keymap.set('n', '<leader>ba', function()
+  vim.cmd '%bd|e#|bd#'
+end, { desc = '[B]uffer: Close [A]ll except current' })
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
--- vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
-vim.keymap.set('n', '<leader>e', function()
-  require('timber.buffers').open_float { silent = true }
-  vim.diagnostic.open_float()
-end, { desc = 'Show timber buffer log' })
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>ql', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all diagnostics [Q]uickfix list' })
 
@@ -193,10 +193,6 @@ vim.keymap.set('n', '<leader>qf', vim.diagnostic.setqflist, { desc = 'Open all d
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-
-vim.keymap.set('n', '<leader>tl', function()
-  require('timber.summary').open()
-end, { desc = 'Open timber summary log' })
 
 -- NOTE: TIP: Disable arrow keys in normal mode
 vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -507,6 +503,26 @@ require('lazy').setup({
         { desc = '[F]lutter Run [W]eb' }
       )
       vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
+      vim.keymap.set('n', '<leader>dl', function()
+        local buf = vim.fn.bufnr '__FLUTTER_DEV_LOG__'
+        if buf == -1 then
+          vim.notify('Flutter dev log buffer not found', vim.log.levels.WARN)
+          return
+        end
+
+        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        local file = io.open('/tmp/dart_debug.log', 'w') -- "a" means append
+        if not file then
+          vim.notify('Failed to open file for writing', vim.log.levels.ERROR)
+          return
+        end
+
+        for _, line in ipairs(lines) do
+          file:write(line .. '\n')
+        end
+        file:close()
+        vim.notify('Appended Flutter dev log to /tmp/dart_debug.log', vim.log.levels.INFO)
+      end, { desc = 'Append Flutter dev log to file' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', builtin.current_buffer_fuzzy_find, { desc = '[/] Fuzzily search in current buffer' })
@@ -1003,16 +1019,16 @@ require('lazy').setup({
           --
           -- <c-l> will move you to the right of each of the expansion locations.
           -- <c-h> is similar, except moving you backwards.
-          ['<C-l>'] = cmp.mapping(function()
-            if luasnip.expand_or_locally_jumpable() then
-              luasnip.expand_or_jump()
-            end
-          end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
-            if luasnip.locally_jumpable(-1) then
-              luasnip.jump(-1)
-            end
-          end, { 'i', 's' }),
+          -- ['<C-l>'] = cmp.mapping(function()
+          --   if luasnip.expand_or_locally_jumpable() then
+          --     luasnip.expand_or_jump()
+          --   end
+          -- end, { 'i', 's' }),
+          -- ['<C-h>'] = cmp.mapping(function()
+          --   if luasnip.locally_jumpable(-1) then
+          --     luasnip.jump(-1)
+          --   end
+          -- end, { 'i', 's' }),
 
           -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
           --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1135,14 +1151,16 @@ require('lazy').setup({
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
+    init = function()
+      -- vim.g.miniindentscope_disable = true
+    end,
     config = function()
-      -- Better Around/Inside textobjects
-      --
-      -- Examples:
-      --  - va)  - [V]isually select [A]round [)]paren
-      --  - yinq - [Y]ank [I]nside [N]ext [']quote
-      --  - ci'  - [C]hange [I]nside [']quote
       require('mini.ai').setup { n_lines = 500 }
+      require('mini.indentscope').setup {
+        options = {
+          indent_at_cursor = true,
+        },
+      }
 
       -- Add/delete/replace surroundings (brackets, quotes, etc.)
       --
@@ -1150,25 +1168,6 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
-
-      -- Simple and easy statusline.
-      --  You could remove this setup call if you don't like it,
-      --  and try some other statusline plugin
-      -- local statusline = require 'mini.statusline'
-      -- -- set use_icons to true if you have a Nerd Font
-      -- statusline.setup { use_icons = vim.g.have_nerd_font }
-      --
-      -- -- You can configure sections in the statusline by overriding their
-      -- -- default behavior. For example, here we set the section for
-      -- -- cursor location to LINE:COLUMN
-      -- ---@diagnostic disable-next-line: duplicate-set-field
-      -- -- local flutter = vim.g.flutter_tools_decorations and vim.g.flutter_tools_decorations.app_version or ''
-      -- statusline.section_location = function()
-      --   return '%2l:%-2v'
-      -- end
-      --
-      -- ... and there is more!
-      --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -1263,11 +1262,26 @@ require('lazy').setup({
       local function filepath()
         return vim.fn.expand '%:p' -- full file path
       end
+      local function file_save_status()
+        return vim.bo.modified and '●' or '✓'
+      end
       require('lualine').setup {
         sections = {
           lualine_a = { 'mode' },
-          lualine_b = { 'branch', 'diff', 'diagnostics' },
-          lualine_c = { filepath },
+          lualine_b = {
+            'branch',
+            'diff',
+            'diagnostics',
+            {
+              function()
+                local fp = vim.fn.expand '%:p'
+                local package_name = fp:match 'packages/([^/]+)/'
+                package_name = package_name:gsub('jfc%-global%-', '')
+                return package_name or ''
+              end,
+            },
+          },
+          lualine_c = { filepath, file_save_status },
           lualine_x = { 'filesize', 'filetype' },
           lualine_y = { 'g:flutter_tools_decorations.app_version', 'progress' },
           lualine_z = { 'location' },
@@ -1380,7 +1394,7 @@ require('lazy').setup({
     },
     build = 'make tiktoken', -- Only on MacOS or Linux
     opts = {
-      model = 'claude-sonnet-4',
+      model = 'gpt-4.1',
       mappings = {
         complete = {
           detail = 'Use @<Tab> or /<Tab> for options.',
@@ -1417,7 +1431,7 @@ require('lazy').setup({
   },
   {
     'Goose97/timber.nvim',
-    version = '*', -- Use for stability; omit to use `main` branch for the latest features
+    version = 'main', -- Use for stability; omit to use `main` branch for the latest features
     event = 'VeryLazy',
     config = function()
       vim.api.nvim_create_user_command('TimberClearLogs', function()
@@ -1425,45 +1439,54 @@ require('lazy').setup({
         require('timber.summary').clear()
       end, {})
       vim.cmd [[cab tc TimberClearLogs]]
+
+      vim.keymap.set('n', '<leader>te', function()
+        require('timber.buffers').open_float { silent = true }
+        vim.diagnostic.open_float()
+      end, { desc = 'Show timber buffer log' })
+
+      vim.keymap.set('n', '<leader>tl', function()
+        require('timber.summary').open()
+      end, { desc = 'Open timber summary log' })
+
       require('timber').setup {
         log_templates = {
           default = {
-            javascript = js_like_single_log,
-            typescript = js_like_single_log,
-            jsx = js_like_single_log,
-            tsx = js_like_single_log,
             elixir = {
               [[Logger.info(~s|%watcher_marker_start#{inspect(%log_target, pretty: true)}%watcher_marker_end\n|)]],
               auto_import = [[require Logger]],
             },
+            dart = { [[print('%watcher_marker_start %log_target: ${%log_target} %watcher_marker_end');]] },
           },
           plain = {
-            javascript = js_like_plain_log,
-            typescript = js_like_plain_log,
-            jsx = js_like_plain_log,
-            tsx = js_like_plain_log,
             lua = [[utils.log("%log_marker %insert_cursor")]],
             elixir = {
               [[Logger.info(~s|%watcher_marker_start %insert_cursor %watcher_marker_end\n|)]],
               auto_import = [[require Logger]],
             },
+            dart = { [[print('%watcher_marker_start %insert_cursor %watcher_marker_end');]] },
           },
         },
         batch_log_templates = {
           default = {
-            javascript = js_like_batch_log,
-            typescript = js_like_batch_log,
-            jsx = js_like_batch_log,
-            tsx = js_like_batch_log,
             elixir = {
               [[Logger.info(~s|%watcher_marker_start#{inspect(%{%repeat<%log_target: %log_target><, >}, pretty: true)}%watcher_marker_end\n|)]],
               auto_import = [[require Logger]],
             },
+            dart = { [[print('%watcher_marker_start %log_target: ${%log_target} %watcher_marker_end');]] },
           },
         },
         log_watcher = {
           enabled = true,
           sources = {
+            dart_log = {
+              name = 'Dart Log',
+              type = 'filesystem',
+              path = '/tmp/dart_debug.log',
+              buffer = {
+                syntax = 'dart',
+              },
+            },
             neotest = {
               name = 'Neotest',
               type = 'neotest',
@@ -1518,17 +1541,25 @@ require('lazy').setup({
               return vim.iter({ { 'env', 'MIX_ENV=test' }, cmd }):flatten():totable()
             end,
           },
-          -- require 'neotest-rust',
-          -- require 'neotest-python',
-          -- require 'neotest-javascript',
-          -- require 'neotest-go',
-          -- require 'neotest-vim-test',
-          -- require 'neotest-dotnet',
         },
         consumer = {
           timber = require('timber.watcher.sources.neotest').consumer,
         },
       }
+
+      local neotest = require 'neotest'
+      local map = vim.keymap.set
+      map('n', '<leader>nr', function()
+        neotest.run.run()
+      end, { desc = 'Run nearest test' })
+      map('n', '<leader>nf', function()
+        neotest.run.run(vim.fn.expand '%')
+      end, { desc = 'Run all tests in file' })
+      map('n', '<leader>np', function()
+        neotest.output_panel.toggle()
+      end, { desc = '[T]oggle [P]anel: Neotest Output Panel' })
+
+      map('n', '<leader>no', ':Neotest output<CR>', { desc = '[N]eotest [O]utput' })
     end,
   },
   {
@@ -1561,8 +1592,6 @@ require('lazy').setup({
         end
       end
 
-      function _lazygit_toggle() end
-
       require('toggleterm').setup {
         size = set_size,
         open_mapping = [[tj]],
@@ -1578,27 +1607,33 @@ require('lazy').setup({
       }
 
       local Terminal = require('toggleterm.terminal').Terminal
-
-      local term_vertical = Terminal:new { direction = 'vertical' }
-      local term_horizontal = Terminal:new { direction = 'horizontal' }
-
       local map = vim.keymap.set
-
       local lazygit = Terminal:new { cmd = 'lazygit', hidden = true, direction = 'float' }
 
       map('n', 'lg', function()
         lazygit:toggle()
       end, { desc = 'Toggle LazyGit', noremap = true, silent = true })
-      -- map('n', 'tj', function()
-      --   term_horizontal:toggle()
-      -- end, { desc = 'Toggle terminal below', noremap = true, silent = true })
-      -- map('n', 'tl', function()
-      --   term_vertical:toggle()
-      -- end, { desc = 'Toggle terminal vertical', noremap = true, silent = true })
-      -- map('n', 'tq', function()
-      --   -- Terminal:clos
-      -- end, { desc = 'Close all terminals', noremap = true, silent = true })
+      local function focus_term(id)
+        local term = require('toggleterm.terminal').get(id)
+        term:focus()
+      end
+
+      map('n', '1to', function()
+        focus_term(1)
+      end, { desc = 'Focus terminal #1' })
+      map('n', '2to', function()
+        focus_term(2)
+      end, { desc = 'Focus terminal #2' })
+      map('n', '3to', function()
+        focus_term(3)
+      end, { desc = 'Focus terminal #3' })
     end,
+  },
+  {
+    dir = '~/.config/nvim/lua/custom',
+    main = 'custom.pancake_work_color_mapping',
+    name = 'custom.pancake_work_color_mapping',
+    config = true,
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
