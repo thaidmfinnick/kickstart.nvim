@@ -1177,6 +1177,7 @@ require('lazy').setup({
       dev_log = {
         enabled = true,
         open_cmd = '50vnew',
+        focus_on_open = false,
       },
       flutter_lookup_cmd = 'mise where flutter',
       decorations = {
@@ -1252,8 +1253,10 @@ require('lazy').setup({
         vim.notify('Appended Flutter dev log to /tmp/dart_debug.log', vim.log.levels.INFO)
       end, { desc = 'Append Flutter dev log to file' })
 
-      vim.keymap.set('n', '<leader>fa', '<Cmd>FlutterLogClear<CR>', { desc = '[F]lutter Log [C]lear' })
-      vim.keymap.set('n', '<leader>ft', '<Cmd>FlutterLogToggle<CR>', { desc = '[F]lutter Log [T]oggle' })
+      vim.keymap.set('n', '<leader>fc', '<Cmd>FlutterLogClear<CR>', { desc = '[F]lutter Log [C]lear' })
+      vim.keymap.set('n', '<leader>fo', '<Cmd>FlutterLogToggle<CR>', { desc = '[F]lutter Log T[o]ggle' })
+      vim.keymap.set('n', '<leader>fq', '<Cmd>FlutterQuit<CR>', { desc = '[F]lutter [Q]uit' })
+      vim.keymap.set('n', '<leader>f', '<Cmd>FlutterRestart<CR>', { desc = '[F]lutter Re[s]tart' })
     end,
   },
   {
