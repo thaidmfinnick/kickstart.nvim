@@ -176,7 +176,7 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' })
 
 vim.keymap.set('n', '<leader>ba', function()
-  vim.cmd '%bd|e#|bd#'
+  vim.cmd ':%bd|e#'
 end, { desc = '[B]uffer: Close [A]ll except current' })
 
 -- Diagnostic keymaps
@@ -464,7 +464,6 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
-      local extensions = require('telescope').extensions
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
@@ -488,41 +487,6 @@ require('lazy').setup({
           sort_lastused = true,
         }
       end, { desc = '[ ] Find existing buffers' })
-      vim.keymap.set('n', '<leader>fl', extensions.flutter.commands, { desc = '[F]lutter commands' })
-      vim.keymap.set(
-        'n',
-        '<leader>fd',
-        '<Cmd>FlutterRun -d macos --flavor dev --dart-define=FLAVOR=dev<CR>',
-        { desc = '[F]lutter Run [D]ev Flavor for Desktop' }
-      )
-      vim.keymap.set('n', '<leader>fr', '<Cmd>FlutterRun --flavor dev --dart-define=FLAVOR=dev<CR>', { desc = '[F]lutter Run [D]ev Flavor' })
-      vim.keymap.set(
-        'n',
-        '<leader>fw',
-        '<Cmd>FlutterRun -d chrome --web-experimental-hot-reload --web-browser-flag "--disable-web-security" --web-port 5000<CR>',
-        { desc = '[F]lutter Run [W]eb' }
-      )
-      vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
-      vim.keymap.set('n', '<leader>dl', function()
-        local buf = vim.fn.bufnr '__FLUTTER_DEV_LOG__'
-        if buf == -1 then
-          vim.notify('Flutter dev log buffer not found', vim.log.levels.WARN)
-          return
-        end
-
-        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        local file = io.open('/tmp/dart_debug.log', 'w') -- "a" means append
-        if not file then
-          vim.notify('Failed to open file for writing', vim.log.levels.ERROR)
-          return
-        end
-
-        for _, line in ipairs(lines) do
-          file:write(line .. '\n')
-        end
-        file:close()
-        vim.notify('Appended Flutter dev log to /tmp/dart_debug.log', vim.log.levels.INFO)
-      end, { desc = 'Append Flutter dev log to file' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', builtin.current_buffer_fuzzy_find, { desc = '[/] Fuzzily search in current buffer' })
@@ -1248,11 +1212,68 @@ require('lazy').setup({
         },
       },
     },
+    config = function(_, opts)
+      require('flutter-tools').setup(opts)
+
+      local extensions = require('telescope').extensions
+      vim.keymap.set('n', '<leader>fl', extensions.flutter.commands, { desc = '[F]lutter commands' })
+      vim.keymap.set(
+        'n',
+        '<leader>fd',
+        '<Cmd>FlutterRun -d macos --flavor dev --dart-define=FLAVOR=dev<CR>',
+        { desc = '[F]lutter Run [D]ev Flavor for Desktop' }
+      )
+      vim.keymap.set('n', '<leader>fr', '<Cmd>FlutterRun --flavor dev --dart-define=FLAVOR=dev<CR>', { desc = '[F]lutter Run [D]ev Flavor' })
+      vim.keymap.set(
+        'n',
+        '<leader>fw',
+        '<Cmd>FlutterRun -d chrome --web-experimental-hot-reload --web-browser-flag "--disable-web-security" --web-port 5000<CR>',
+        { desc = '[F]lutter Run [W]eb' }
+      )
+      vim.keymap.set('n', '<leader>fv', extensions.flutter.fvm, { desc = '[F]lutter version manager' })
+      vim.keymap.set('n', '<leader>dl', function()
+        local buf = vim.fn.bufnr '__FLUTTER_DEV_LOG__'
+        if buf == -1 then
+          vim.notify('Flutter dev log buffer not found', vim.log.levels.WARN)
+          return
+        end
+
+        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        local file = io.open('/tmp/dart_debug.log', 'w') -- "a" means append
+        if not file then
+          vim.notify('Failed to open file for writing', vim.log.levels.ERROR)
+          return
+        end
+
+        for _, line in ipairs(lines) do
+          file:write(line .. '\n')
+        end
+        file:close()
+        vim.notify('Appended Flutter dev log to /tmp/dart_debug.log', vim.log.levels.INFO)
+      end, { desc = 'Append Flutter dev log to file' })
+
+      vim.keymap.set('n', '<leader>fa', '<Cmd>FlutterLogClear<CR>', { desc = '[F]lutter Log [C]lear' })
+      vim.keymap.set('n', '<leader>ft', '<Cmd>FlutterLogToggle<CR>', { desc = '[F]lutter Log [T]oggle' })
+    end,
   },
   {
     'mtdl9/vim-log-highlighting',
     -- lazy = false,
     config = function() end,
+  },
+  {
+    'gbprod/yanky.nvim',
+    opts = {},
+    config = function(_, opts)
+      require('yanky').setup(opts)
+      vim.keymap.set({ 'n', 'x' }, 'p', '<Plug>(YankyPutAfter)')
+      vim.keymap.set({ 'n', 'x' }, 'P', '<Plug>(YankyPutBefore)')
+      vim.keymap.set({ 'n', 'x' }, 'gp', '<Plug>(YankyGPutAfter)')
+      vim.keymap.set({ 'n', 'x' }, 'gP', '<Plug>(YankyGPutBefore)')
+
+      vim.keymap.set('n', '<c-p>', '<Plug>(YankyPreviousEntry)')
+      vim.keymap.set('n', '<c-n>', '<Plug>(YankyNextEntry)')
+    end,
   },
   {
     'nvim-lualine/lualine.nvim',
@@ -1265,6 +1286,16 @@ require('lazy').setup({
       local function file_save_status()
         return vim.bo.modified and '●' or '✓'
       end
+      local function file_length()
+        return vim.api.nvim_buf_line_count(0)
+      end
+
+      local function file_info()
+        local path = vim.fn.expand '%:p' -- full file path
+        local status = vim.bo.modified and '●' or '✓'
+        return path .. ' ' .. status
+      end
+
       require('lualine').setup {
         sections = {
           lualine_a = { 'mode' },
@@ -1281,17 +1312,17 @@ require('lazy').setup({
               end,
             },
           },
-          lualine_c = { filepath, file_save_status },
+          lualine_c = { file_info },
           lualine_x = { 'filesize', 'filetype' },
-          lualine_y = { 'g:flutter_tools_decorations.app_version', 'progress' },
+          lualine_y = { 'g:flutter_tools_decorations.app_version', file_length },
           lualine_z = { 'location' },
         },
         inactive_sections = {
           lualine_a = { 'mode' },
           lualine_b = { 'branch', 'diff', 'diagnostics' },
           lualine_c = { 'filename' },
-          lualine_x = { 'encoding', 'filesize', 'filetype' },
-          lualine_y = { 'progress' },
+          lualine_x = { 'filesize', 'filetype' },
+          lualine_y = { file_length },
           lualine_z = { 'location' },
         },
       }
@@ -1446,7 +1477,7 @@ require('lazy').setup({
       end, { desc = 'Show timber buffer log' })
 
       vim.keymap.set('n', '<leader>tl', function()
-        require('timber.summary').open()
+        require('timber.summary').toggle()
       end, { desc = 'Open timber summary log' })
 
       require('timber').setup {
