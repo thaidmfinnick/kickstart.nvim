@@ -1256,7 +1256,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>fc', '<Cmd>FlutterLogClear<CR>', { desc = '[F]lutter Log [C]lear' })
       vim.keymap.set('n', '<leader>fo', '<Cmd>FlutterLogToggle<CR>', { desc = '[F]lutter Log T[o]ggle' })
       vim.keymap.set('n', '<leader>fq', '<Cmd>FlutterQuit<CR>', { desc = '[F]lutter [Q]uit' })
-      vim.keymap.set('n', '<leader>f', '<Cmd>FlutterRestart<CR>', { desc = '[F]lutter Re[s]tart' })
+      vim.keymap.set('n', '<leader>fs', '<Cmd>FlutterRestart<CR>', { desc = '[F]lutter Re[s]tart' })
     end,
   },
   {
