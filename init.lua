@@ -169,15 +169,26 @@ vim.opt.foldenable = false
 --  See `:help vim.keymap.set()`
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
+vim.opt.conceallevel = 2
 vim.opt.hlsearch = true
 vim.diagnostic.config { virtual_text = true }
 
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-vim.keymap.set('n', '<leader>tc', ':tabclose<CR>', { desc = 'Close current tab' })
 
 vim.keymap.set('n', '<leader>ba', function()
   vim.cmd ':%bd|e#'
 end, { desc = '[B]uffer: Close [A]ll except current' })
+
+-- Tab keymaps
+vim.keymap.set('n', 'tt', ':tabnew<CR>', { desc = '[T]ab: Open [N]ew tab' })
+vim.keymap.set('n', 'to', ':tabonly<CR>', { desc = '[T]ab: Close [O]ther tabs' })
+vim.keymap.set('n', 'tp', ':tabprevious<CR>', { desc = '[T]ab: Go to [P]revious tab' })
+vim.keymap.set('n', 'tn', ':tabnext<CR>', { desc = '[T]ab: Go to [N]ext tab' })
+vim.keymap.set('n', 'tl', ':tablast<CR>', { desc = '[T]ab: Go to [L]ast tab' })
+vim.keymap.set('n', 'tc', ':tabclose<CR>', { desc = '[T]ab: Close tab' })
+vim.keymap.set('n', 't1', '1gt', { noremap = true, silent = true, desc = 'Go to Tab 1' })
+vim.keymap.set('n', 't2', '2gt', { noremap = true, silent = true, desc = 'Go to Tab 2' })
+vim.keymap.set('n', 't3', '3gt', { noremap = true, silent = true, desc = 'Go to Tab 3' })
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
@@ -352,6 +363,7 @@ require('lazy').setup({
         { '<leader>t_', hidden = true },
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>w_', hidden = true },
+        { '<leader>t', group = '[T]ab' },
       }
       -- visual mode
       require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
@@ -1264,31 +1276,25 @@ require('lazy').setup({
     -- lazy = false,
     config = function() end,
   },
-  {
-    'gbprod/yanky.nvim',
-    opts = {},
-    config = function(_, opts)
-      require('yanky').setup(opts)
-      vim.keymap.set({ 'n', 'x' }, 'p', '<Plug>(YankyPutAfter)')
-      vim.keymap.set({ 'n', 'x' }, 'P', '<Plug>(YankyPutBefore)')
-      vim.keymap.set({ 'n', 'x' }, 'gp', '<Plug>(YankyGPutAfter)')
-      vim.keymap.set({ 'n', 'x' }, 'gP', '<Plug>(YankyGPutBefore)')
-
-      vim.keymap.set('n', '<c-p>', '<Plug>(YankyPreviousEntry)')
-      vim.keymap.set('n', '<c-n>', '<Plug>(YankyNextEntry)')
-    end,
-  },
+  -- {
+  --   'gbprod/yanky.nvim',
+  --   opts = {},
+  --   config = function(_, opts)
+  --     require('yanky').setup(opts)
+  --     vim.keymap.set({ 'n', 'x' }, 'p', '<Plug>(YankyPutAfter)')
+  --     vim.keymap.set({ 'n', 'x' }, 'P', '<Plug>(YankyPutBefore)')
+  --     vim.keymap.set({ 'n', 'x' }, 'gp', '<Plug>(YankyGPutAfter)')
+  --     vim.keymap.set({ 'n', 'x' }, 'gP', '<Plug>(YankyGPutBefore)')
+  --
+  --     vim.keymap.set('n', '<c-p>', '<Plug>(YankyPreviousEntry)')
+  --     vim.keymap.set('n', '<c-n>', '<Plug>(YankyNextEntry)')
+  --   end,
+  -- },
   {
     'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     opts = {},
     config = function(_, _)
-      local function filepath()
-        return vim.fn.expand '%:p' -- full file path
-      end
-      local function file_save_status()
-        return vim.bo.modified and '●' or '✓'
-      end
       local function file_length()
         return vim.api.nvim_buf_line_count(0)
       end
@@ -1338,35 +1344,50 @@ require('lazy').setup({
       'nvim-lua/plenary.nvim',
       'lewis6991/gitsigns.nvim',
     },
-    config = true,
+    config = function()
+      local opts = {
+        keymaps = {
+          view = {
+            ['q'] = '<cmd>DiffviewClose<CR>', -- Close Diffview
+            ['o'] = require('custom.difftastic').open_difftastic,
+          },
+          file_panel = {
+            ['q'] = '<cmd>DiffviewClose<CR>',
+          },
+          file_history_panel = {
+            ['q'] = '<cmd>DiffviewClose<CR>',
+          },
+        },
+      }
+      require('diffview').setup(opts)
+    end,
     keys = {
-      { ',d', '<cmd>DiffviewOpen<cr>', mode = { 'n' }, desc = 'Repo Diffview', nowait = true },
-      { ',hh', '<cmd>DiffviewFileHistory<cr>', mode = { 'n' }, desc = 'Repo history' },
-      { ',hf', '<cmd>DiffviewFileHistory --follow %<cr>', mode = { 'n' }, desc = 'File history' },
-      { ',hm', '<cmd>DiffviewOpen master<cr>', mode = { 'n' }, desc = 'Diff with master' },
-      {
-        ',hl',
-        function()
-          local current_line = vim.fn.line '.'
-          local file = vim.fn.expand '%'
-          -- DiffviewFileHistory --follow -L{current_line},{current_line}:{file}
-          local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
-          vim.cmd(cmd)
-        end,
-        desc = 'Line history',
-      },
-      {
-        ',hl',
-        function()
-          local v = require('util').get_visual_selection_info()
-          local file = vim.fn.expand '%'
-          -- DiffviewFileHistory --follow -L{range_start},{range_end}:{file}
-          local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', v.start_row + 1, v.end_row + 1, file)
-          vim.cmd(cmd)
-        end,
-        mode = { 'v' },
-        desc = 'Range history',
-      },
+      { 'do', '<cmd>DiffviewOpen<cr>', mode = { 'n' }, desc = 'Repo Diffview', nowait = true },
+      { 'dh', '<cmd>DiffviewFileHistory<cr>', mode = { 'n' }, desc = 'Repo history' },
+      -- { 'dp', '<cmd>DiffviewOpen origin/develop<cr>', mode = { 'n' }, desc = 'Diff with develop' },
+      -- {
+      --   ',hl',
+      --   function()
+      --     local current_line = vim.fn.line '.'
+      --     local file = vim.fn.expand '%'
+      --     -- DiffviewFileHistory --follow -L{current_line},{current_line}:{file}
+      --     local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
+      --     vim.cmd(cmd)
+      --   end,
+      --   desc = 'Line history',
+      -- },
+      -- {
+      --   ',hl',
+      --   function()
+      --     local v = require('util').get_visual_selection_info()
+      --     local file = vim.fn.expand '%'
+      --     -- DiffviewFileHistory --follow -L{range_start},{range_end}:{file}
+      --     local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', v.start_row + 1, v.end_row + 1, file)
+      --     vim.cmd(cmd)
+      --   end,
+      --   mode = { 'v' },
+      --   desc = 'Range history',
+      -- },
     },
   },
   {
@@ -1612,7 +1633,23 @@ require('lazy').setup({
       vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
     end,
   },
-
+  {
+    'epwalsh/obsidian.nvim',
+    version = '*', -- recommended, use latest release instead of latest commit
+    lazy = true,
+    ft = 'markdown',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    opts = {
+      workspaces = {
+        {
+          name = 'finnick-notes',
+          path = '~/Documents/projects/personal/finnick-notes',
+        },
+      },
+    },
+  },
   {
     'akinsho/toggleterm.nvim',
     version = '*',
