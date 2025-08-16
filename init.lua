@@ -211,8 +211,6 @@ vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
 vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
 vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
--- File explorer
-vim.keymap.set('n', '-', '<CMD>Oil --float<CR>', { desc = 'Open parent directory' })
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
@@ -363,7 +361,6 @@ require('lazy').setup({
         { '<leader>t_', hidden = true },
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>w_', hidden = true },
-        { '<leader>t', group = '[T]ab' },
       }
       -- visual mode
       require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
@@ -483,7 +480,7 @@ require('lazy').setup({
           hidden = true,
         }
       end, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
+      -- vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
@@ -1033,12 +1030,37 @@ require('lazy').setup({
   --     -- vim.cmd.colorscheme 'material'
   --   end,
   -- },
+  --
+  --
+  {
+    'folke/tokyonight.nvim',
+    priority = 1000, -- Make sure to load this before all the other start plugins.
+    init = function()
+      -- Load the colorscheme here.
+      -- Like many other themes, this one has different styles, and you could load
+      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+      vim.cmd.colorscheme 'tokyonight'
+
+      -- You can configure highlights by doing something like:
+      -- vim.cmd.hi 'Comment gui=none'
+    end,
+  },
+  {
+    'oxfist/night-owl.nvim',
+    lazy = false, -- make sure we load this during startup if it is your main colorscheme
+    priority = 1000, -- make sure to load this before all the other start plugins
+    opts = {},
+    config = function()
+      -- require('night-owl').setup()
+      -- vim.cmd.colorscheme 'night-owl'
+    end,
+  },
   {
     'catppuccin/nvim',
     name = 'catppuccin',
     priority = 1000,
     init = function()
-      vim.cmd.colorscheme 'catppuccin-mocha'
+      -- vim.cmd.colorscheme 'catppuccin-mocha'
     end,
     config = function()
       require('catppuccin').setup {
@@ -1102,23 +1124,6 @@ require('lazy').setup({
         },
       }
     end,
-  },
-  { -- You can easily change to a different colorscheme.
-    -- Change the name of the colorscheme plugin below, and then
-    -- change the command in the config to whatever the name of that colorscheme is.
-    --
-    -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
-    priority = 1000, -- Make sure to load this before all the other start plugins.
-    -- init = function()
-    --   -- Load the colorscheme here.
-    --   -- Like many other themes, this one has different styles, and you could load
-    --   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-    --   vim.cmd.colorscheme 'tokyonight-night'
-    --
-    --   -- You can configure highlights by doing something like:
-    --   vim.cmd.hi 'Comment gui=none'
-    -- end,
   },
   { 'bluz71/vim-nightfly-colors', name = 'nightfly', lazy = false, priority = 1000 },
 
@@ -1364,30 +1369,28 @@ require('lazy').setup({
     keys = {
       { 'do', '<cmd>DiffviewOpen<cr>', mode = { 'n' }, desc = 'Repo Diffview', nowait = true },
       { 'dh', '<cmd>DiffviewFileHistory<cr>', mode = { 'n' }, desc = 'Repo history' },
-      -- { 'dp', '<cmd>DiffviewOpen origin/develop<cr>', mode = { 'n' }, desc = 'Diff with develop' },
-      -- {
-      --   ',hl',
-      --   function()
-      --     local current_line = vim.fn.line '.'
-      --     local file = vim.fn.expand '%'
-      --     -- DiffviewFileHistory --follow -L{current_line},{current_line}:{file}
-      --     local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
-      --     vim.cmd(cmd)
-      --   end,
-      --   desc = 'Line history',
-      -- },
-      -- {
-      --   ',hl',
-      --   function()
-      --     local v = require('util').get_visual_selection_info()
-      --     local file = vim.fn.expand '%'
-      --     -- DiffviewFileHistory --follow -L{range_start},{range_end}:{file}
-      --     local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', v.start_row + 1, v.end_row + 1, file)
-      --     vim.cmd(cmd)
-      --   end,
-      --   mode = { 'v' },
-      --   desc = 'Range history',
-      -- },
+      {
+        'dl',
+        function()
+          local current_line = vim.fn.line '.'
+          local file = vim.fn.expand '%'
+          local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
+          vim.cmd(cmd)
+        end,
+        desc = 'Line history',
+      },
+      {
+        'dr',
+        function()
+          local start_line = vim.fn.line "'<"
+          local end_line = vim.fn.line "'>"
+          local file = vim.fn.expand '%'
+          local cmd = string.format('DiffviewFileHistory --follow -L%d,%d:%s', start_line, end_line, file)
+          vim.cmd(cmd)
+        end,
+        mode = { 'v' },
+        desc = 'Range history',
+      },
     },
   },
   {
@@ -1409,9 +1412,19 @@ require('lazy').setup({
           { 'name', 'asc' },
         },
       },
+
+      keymaps = {
+        ['q'] = { 'actions.close', mode = 'n' },
+      },
     },
     -- Optional dependencies
     dependencies = { 'nvim-tree/nvim-web-devicons' },
+    config = function(_, opts)
+      require('oil').setup(opts)
+
+      -- File explorer
+      vim.keymap.set('n', '-', '<CMD>Oil --float<CR>', { desc = 'Open parent directory' })
+    end,
   },
   -- {
   --   'ray-x/go.nvim',
@@ -1563,19 +1576,35 @@ require('lazy').setup({
     end,
   },
   {
+    'Goose97/alternative.nvim',
+    version = '*', -- Use for stability; omit to use `main` branch for the latest features
+    event = 'VeryLazy',
+    config = function()
+      require('alternative').setup {
+        keymaps = {
+          -- Set to false to disable the default keymap for specific actions
+          -- alternative_next = false,
+          alternative_next = '<C-.>',
+          alternative_prev = '<C-,>',
+        },
+        rules = {
+          'general.boolean_flip',
+          'general.number_increment_decrement',
+          ['general.compare_operator_flip'] = {
+            preview = true,
+          },
+          'elixir.function_definition_variants',
+          'elixir.if_condition_flip',
+          'elixir.if_expression_variants',
+          'elixir.pipe_first_function_argument',
+        },
+      }
+    end,
+  },
+  {
     'RRethy/nvim-treesitter-textsubjects',
     branch = 'master',
     dependencies = { 'nvim-treesitter/nvim-treesitter' },
-  },
-  {
-    'oxfist/night-owl.nvim',
-    lazy = false, -- make sure we load this during startup if it is your main colorscheme
-    priority = 1000, -- make sure to load this before all the other start plugins
-    opts = {},
-    config = function()
-      -- require('night-owl').setup()
-      -- vim.cmd.colorscheme 'night-owl'
-    end,
   },
   {
     'nvim-neotest/neotest',
@@ -1585,6 +1614,7 @@ require('lazy').setup({
       'antoinemadec/FixCursorHold.nvim',
       'nvim-treesitter/nvim-treesitter',
       'jfpedroza/neotest-elixir',
+      'sidlatau/neotest-dart',
     },
     config = function()
       require('neotest').setup {
@@ -1595,6 +1625,14 @@ require('lazy').setup({
             post_process_command = function(cmd)
               return vim.iter({ { 'env', 'MIX_ENV=test' }, cmd }):flatten():totable()
             end,
+          },
+          require 'neotest-dart' {
+            command = 'flutter', -- Command being used to run tests. Defaults to `flutter`
+            -- Change it to `fvm flutter` if using FVM
+            -- change it to `dart` for Dart only tests
+            use_lsp = true, -- When set Flutter outline information is used when constructing test name.
+            -- Useful when using custom test names with @isTest annotation
+            custom_test_method_names = {},
           },
         },
         consumer = {
@@ -1627,10 +1665,14 @@ require('lazy').setup({
     config = function()
       require('substitute').setup()
       -- substitution keymap
-      vim.keymap.set('n', 's', require('substitute').operator, { noremap = true })
-      vim.keymap.set('n', 'ss', require('substitute').line, { noremap = true })
-      vim.keymap.set('n', 'S', require('substitute').eol, { noremap = true })
-      vim.keymap.set('x', 's', require('substitute').visual, { noremap = true })
+      vim.keymap.set('n', 's', require('substitute').operator, { noremap = true, desc = 'Substitute operator' })
+      vim.keymap.set('n', 'ss', require('substitute').line, { noremap = true, desc = 'Substitute line' })
+      vim.keymap.set('x', 's', require('substitute').visual, { noremap = true, desc = 'Substitute visual selection' })
+
+      -- exchange keymaps
+      vim.keymap.set('n', 'sx', require('substitute.exchange').operator, { noremap = true, desc = 'Exchange operator' })
+      vim.keymap.set('n', 'sxx', require('substitute.exchange').line, { noremap = true, desc = 'Exchange line' })
+      vim.keymap.set('x', 'X', require('substitute.exchange').visual, { noremap = true, desc = 'Exchange visual selection' })
     end,
   },
   {
@@ -1647,7 +1689,58 @@ require('lazy').setup({
           name = 'finnick-notes',
           path = '~/Documents/projects/personal/finnick-notes',
         },
+        {
+          name = 'master-thesis',
+          path = '~/Documents/projects/personal/master-thesis',
+        },
+        {
+          name = 'step-notes',
+          path = '~/Documents/projects/personal/step-notes',
+        },
       },
+      -- templates = {
+      --   folder = 'templates',
+      --   date_format = '%Y-%m-%d',
+      --   time_format = '%H:%M',
+      --   -- Add weekly template substitutions
+      --   substitutions = {
+      --     weekly_title = function()
+      --       local date = os.date '*t'
+      --       local week_num = tonumber(os.date '%V')
+      --       local year = date.year
+      --
+      --       -- Calculate start of week (Monday)
+      --       local days_since_monday = (date.wday + 5) % 7
+      --       local monday = os.time(date) - (days_since_monday * 24 * 60 * 60)
+      --       local sunday = monday + (6 * 24 * 60 * 60)
+      --
+      --       local monday_date = os.date('*t', monday)
+      --       local sunday_date = os.date('*t', sunday)
+      --
+      --       local start_str = os.date('%b %d', monday)
+      --       local end_str = os.date('%b %d, %Y', sunday)
+      --
+      --       return string.format('Week %d - %s to %s', week_num, start_str, end_str)
+      --     end,
+      --
+      --     weekly_filename = function()
+      --       local week_num = tonumber(os.date '%V')
+      --       local year = os.date '%Y'
+      --       local date = os.date '*t'
+      --
+      --       -- Calculate Monday of current week
+      --       local days_since_monday = (date.wday + 5) % 7
+      --       local monday = os.time(date) - (days_since_monday * 24 * 60 * 60)
+      --       local sunday = monday + (6 * 24 * 60 * 60)
+      --
+      --       local start_day = os.date('%d', monday)
+      --       local end_day = os.date('%d', sunday)
+      --       local month = os.date('%m', monday)
+      --
+      --       return string.format('Week-%02d-%s%s-to-%s%s-%s', week_num, month, start_day, month, end_day, year)
+      --     end,
+      --   },
+      -- },
     },
   },
   {
@@ -1699,6 +1792,45 @@ require('lazy').setup({
         focus_term(3)
       end, { desc = 'Focus terminal #3' })
     end,
+  },
+  {
+    'folke/flash.nvim',
+    event = 'VeryLazy',
+    opts = {},
+    keys = {
+      {
+        '/',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').jump()
+        end,
+        desc = 'Flash',
+      },
+      {
+        'S',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').treesitter()
+        end,
+        desc = 'Flash Treesitter',
+      },
+      {
+        'r',
+        mode = 'o',
+        function()
+          require('flash').remote()
+        end,
+        desc = 'Remote Flash',
+      },
+      {
+        '<c-s>',
+        mode = { 'c' },
+        function()
+          require('flash').toggle()
+        end,
+        desc = 'Toggle Flash Search',
+      },
+    },
   },
   {
     dir = '~/.config/nvim/lua/custom',
