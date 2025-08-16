@@ -9,6 +9,8 @@
     (local_function_declaration)
     (if_statement)
     (formal_parameter)
+    (initializers)
+    (initializer_list_entry)
   ]) @_start
   (#make-range! "range" @_start @_start)
 )
@@ -41,14 +43,46 @@
   (identifier) @_start
   .
   (selector
-    (unconditional_assignable_selector)
-  )*
+    ([
+      (unconditional_assignable_selector)
+      (argument_part)
+    ])
+  )+ @_end
   .
-  (selector
-    (unconditional_assignable_selector)
-  ) @_end
   (#make-range! "range" @_start @_end)
 )
+
+(
+  (identifier) @_start
+  .
+  (selector
+    ([
+      (unconditional_assignable_selector)
+      (argument_part)
+    ])
+  ) @_end
+  ";"
+  (#make-range! "range" @_start @_end)
+)
+
+
+(
+  (selector
+    ([
+      (unconditional_assignable_selector)
+      (argument_part)
+    ])
+  ) @_start
+  .
+  (selector
+    ([
+      (unconditional_assignable_selector)
+      (argument_part)
+    ])
+  )* @_end
+  (#make-range! "range" @_start @_end)
+)
+
 
 (
   (method_signature) @_start
@@ -70,6 +104,8 @@
 (
   (identifier) @_start
   .
-  (selector) @_end
+  (selector
+    (argument_part)
+  ) @_end
   (#make-range! "range" @_start @_end)
 )
