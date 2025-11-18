@@ -162,7 +162,7 @@ vim.bo.softtabstop = 2
 vim.opt.scrolloff = 10
 vim.opt.fixeol = false
 
-vim.opt.foldmethod = 'expr'
+vim.opt.foldmethod = 'indent'
 vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
 vim.opt.foldenable = false
 -- [[ Basic Keymaps ]]
@@ -185,7 +185,7 @@ vim.keymap.set('n', 'to', ':tabonly<CR>', { desc = '[T]ab: Close [O]ther tabs' }
 vim.keymap.set('n', 'tp', ':tabprevious<CR>', { desc = '[T]ab: Go to [P]revious tab' })
 vim.keymap.set('n', 'tn', ':tabnext<CR>', { desc = '[T]ab: Go to [N]ext tab' })
 vim.keymap.set('n', 'tl', ':tablast<CR>', { desc = '[T]ab: Go to [L]ast tab' })
-vim.keymap.set('n', 'tc', ':tabclose<CR>', { desc = '[T]ab: Close tab' })
+vim.keymap.set('n', 'tc', ':tabclose<CR>', { desc = '[T]ab: [C]lose tab' })
 vim.keymap.set('n', 't1', '1gt', { noremap = true, silent = true, desc = 'Go to Tab 1' })
 vim.keymap.set('n', 't2', '2gt', { noremap = true, silent = true, desc = 'Go to Tab 2' })
 vim.keymap.set('n', 't3', '3gt', { noremap = true, silent = true, desc = 'Go to Tab 3' })
@@ -223,7 +223,12 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 --
+vim.keymap.set('n', '<Leader>xc', function()
+  local filepath = vim.fn.expand '%:p'
+  vim.fn.setreg('+', filepath) -- write to clippoard
+end, { noremap = true, silent = true, desc = 'Yank file path' })
 
+vim.api.nvim_set_keymap('n', '<leader>y', ':%y<CR>', { noremap = true, silent = true, desc = 'Yank entire file' })
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
 --  See `:help vim.highlight.on_yank()`
@@ -460,6 +465,9 @@ require('lazy').setup({
           current_buffer_fuzzy_find = layout_conf,
         },
         extensions = {
+          quicknote = {
+            defaultScope = 'Global',
+          },
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
@@ -470,6 +478,7 @@ require('lazy').setup({
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
       pcall(require('telescope').load_extension, 'flutter')
+      pcall(require('telescope').load_extension, 'quicknote')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -875,7 +884,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, yaml = true, html = true, query = true }
+        local disable_filetypes = { query = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -894,6 +903,7 @@ require('lazy').setup({
         lua = { 'stylua' },
         dart = { 'dart', 'format' },
         elixir = { 'mix', 'format' },
+        swift = { 'swift', 'format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1133,7 +1143,7 @@ require('lazy').setup({
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     init = function()
-      -- vim.g.miniindentscope_disable = true
+      vim.g.miniindentscope_disable = true
     end,
     config = function()
       require('mini.ai').setup { n_lines = 500 }
@@ -1230,6 +1240,7 @@ require('lazy').setup({
         },
       },
     },
+    root_patterns = { 'mise.toml' },
     config = function(_, opts)
       require('flutter-tools').setup(opts)
 
@@ -1361,6 +1372,12 @@ require('lazy').setup({
           },
           file_history_panel = {
             ['q'] = '<cmd>DiffviewClose<CR>',
+            ['<S-o>'] = function()
+              local actions = require 'diffview.actions'
+              actions.copy_hash()
+              local unnamed_content = vim.fn.getreg '+'
+              vim.fn.system(string.format('gh browse %s', unnamed_content))
+            end,
           },
         },
       }
@@ -1369,6 +1386,7 @@ require('lazy').setup({
     keys = {
       { 'do', '<cmd>DiffviewOpen<cr>', mode = { 'n' }, desc = 'Repo Diffview', nowait = true },
       { 'dh', '<cmd>DiffviewFileHistory<cr>', mode = { 'n' }, desc = 'Repo history' },
+      { 'dh', '<cmd>DiffviewFileHistory --follow %<cr>', mode = { 'n' }, desc = 'Current file history' },
       {
         'dl',
         function()
@@ -1377,17 +1395,19 @@ require('lazy').setup({
           local cmd = string.format('DiffviewFileHistory --follow -L%s,%s:%s', current_line, current_line, file)
           vim.cmd(cmd)
         end,
+        mode = { 'n' },
         desc = 'Line history',
       },
       {
         'dr',
-        function()
-          local start_line = vim.fn.line "'<"
-          local end_line = vim.fn.line "'>"
-          local file = vim.fn.expand '%'
-          local cmd = string.format('DiffviewFileHistory --follow -L%d,%d:%s', start_line, end_line, file)
-          vim.cmd(cmd)
-        end,
+        "<Esc><Cmd>'<,'>DiffviewFileHistory --follow<CR>",
+        -- function()
+        --   local start_line = vim.fn.line "'<"
+        --   local end_line = vim.fn.line "'>"
+        --   local file = vim.fn.expand '%'
+        --   local cmd = string.format('DiffviewFileHistory --follow -L%d,%d:%s', start_line, end_line, file)
+        --   vim.cmd(cmd)
+        -- end,
         mode = { 'v' },
         desc = 'Range history',
       },
@@ -1833,9 +1853,96 @@ require('lazy').setup({
     },
   },
   {
+    'yujinyuz/gitpad.nvim',
+    config = function()
+      require('gitpad').setup {
+        on_attach = function(bufnr)
+          vim.api.nvim_buf_set_keymap(bufnr, 'n', 'q', '<Cmd>wq<CR>', { noremap = true, silent = true })
+        end,
+      }
+    end,
+    keys = {
+      {
+        '<leader>pp',
+        function()
+          -- won't work if not in git repo
+          local project_name = vim.fn.system 'basename $(git rev-parse --show-toplevel)'
+          require('gitpad').toggle_gitpad { title = project_name }
+        end,
+        desc = 'gitpad project',
+      },
+      {
+        '<leader>pb',
+        function()
+          require('gitpad').toggle_gitpad_branch { title = 'Branch notes' }
+        end,
+        desc = 'gitpad branch',
+      },
+      {
+        '<leader>pv',
+        function()
+          require('gitpad').toggle_gitpad_branch { window_type = 'split', split_win_opts = { split = 'right' } }
+        end,
+        desc = 'gitpad branch vertical split',
+      },
+
+      -- Daily notes
+      {
+        '<leader>pd',
+        function()
+          local date_filename = 'daily-' .. os.date '%Y-%m-%d.md'
+          require('gitpad').toggle_gitpad { filename = date_filename } -- or require('gitpad').toggle_gitpad({ filename = date_filename, title = 'Daily notes' })
+        end,
+        desc = 'gitpad daily notes',
+      },
+      -- Per file notes
+      {
+        '<leader>pf',
+        function()
+          local filename = vim.fn.expand '%:p' -- or just use vim.fn.bufname()
+          if filename == '' then
+            vim.notify 'empty bufname'
+            return
+          end
+          filename = vim.fn.pathshorten(filename, 2) .. '.md'
+          require('gitpad').toggle_gitpad { filename = filename } -- or require('gitpad').toggle_gitpad({ filename = filename, title = 'Current file notes' })
+        end,
+        desc = 'gitpad per file notes',
+      },
+    },
+  },
+  {
+    'nanotee/zoxide.vim',
+    version = '*', -- recommended, use latest release instead of latest commit
+  },
+  {
+    'stevearc/aerial.nvim',
+    opts = {},
+    -- Optional dependencies
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-tree/nvim-web-devicons',
+    },
+    config = function(_, _)
+      require('aerial').setup {
+        on_attach = function(bufnr)
+          vim.keymap.set('n', '{', '<cmd>AerialPrev<CR>', { buffer = bufnr })
+          vim.keymap.set('n', '}', '<cmd>AerialNext<CR>', { buffer = bufnr })
+        end,
+      }
+      vim.keymap.set('n', '<leader>l', '<cmd>AerialToggle left<CR>')
+    end,
+  },
+  {
     dir = '~/.config/nvim/lua/custom',
     main = 'custom.pancake_work_color_mapping',
     name = 'custom.pancake_work_color_mapping',
+    config = true,
+  },
+  {
+    dir = '~/.config/nvim/lua/custom',
+    main = 'custom.pancake_work_intl',
+    name = 'custom.pancake_work_intl',
     config = true,
   },
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the

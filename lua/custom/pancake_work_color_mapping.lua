@@ -1,7 +1,7 @@
 local M = {}
 
 local ns_id = vim.api.nvim_create_namespace 'pancake_work_color_mapping'
-local color_file_path = '/Users/admin/Documents/projects/pancake-work/pancake-work-client/packages/pancake_work_styles/lib/pancake_work_colors.dart'
+local color_file_path = '/Users/admin/Documents/projects/pancake-work/pancake-work-client/packages/pancake_work_ui/lib/pancake_work_colors.dart'
 
 M.color_map = nil
 M.color_pair_map = nil
@@ -24,7 +24,7 @@ local function get_color_map()
 
   for line in file:lines() do
     -- Matches lines like: final Color grey1 = Color(0xFFFFFFFF);
-    local name, color = line:match('final Color%s+(%w+)%s*=%s*Color%((0x' .. ('[a-fA-F0-9]'):rep(8) .. ')%)')
+    local name, color = line:match('final Color%s+(%w+)%s*=%s*const Color%((0x' .. ('[a-fA-F0-9]'):rep(8) .. ')%)')
     if name and color then
       -- Map from color hex to color name
       color_map[string.upper(color)] = name
